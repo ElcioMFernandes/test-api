@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { PrismaClient } = require("@prisma/client");
+const authMiddleware = require("./authMiddleware");
 require("dotenv").config();
 
 const app = express();
@@ -28,8 +29,13 @@ app.get("/db-test", async (req, res) => {
   }
 });
 
-// Rota para criar um usuário
-app.post("/users", async (req, res) => {
+// Rota protegida de exemplo
+app.get("/api/protected", authMiddleware, (req, res) => {
+  res.json({ message: "Você acessou uma rota protegida!", user: req.user });
+});
+
+// Rotas protegidas para CRUD de usuários
+app.post("/users", authMiddleware, async (req, res) => {
   const { email, name } = req.body;
   try {
     const user = await prisma.user.create({
@@ -44,8 +50,7 @@ app.post("/users", async (req, res) => {
   }
 });
 
-// Rota para buscar todos os usuários
-app.get("/users", async (req, res) => {
+app.get("/users", authMiddleware, async (req, res) => {
   try {
     const users = await prisma.user.findMany();
     res.json(users);
@@ -54,8 +59,7 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// Rota para atualizar um usuário
-app.put("/users/:id", async (req, res) => {
+app.put("/users/:id", authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { email, name } = req.body;
   try {
@@ -71,8 +75,7 @@ app.put("/users/:id", async (req, res) => {
   }
 });
 
-// Rota para deletar um usuário
-app.delete("/users/:id", async (req, res) => {
+app.delete("/users/:id", authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     await prisma.user.delete({
